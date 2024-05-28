@@ -1,10 +1,10 @@
 import express from 'express';
 import multer from 'multer';
 import { getBooks, getBookDetails, createBook, deleteBook, updateBook, uploadBooks } from "../controllers/book.controller.js";
-import { authenticate } from '../middlewares/authMiddleware.js';
+import { authenticate } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
-const upload = multer();
+const upload = multer({ dest: 'uploads/' });
 
 router.get('/', getBooks);
 
@@ -16,6 +16,6 @@ router.put('/:id', authenticate, updateBook);
 
 router.delete('/:id', authenticate, deleteBook);
 
-// router.post('/upload', authenticate, upload.single('file'), uploadBooks);
+router.post('/upload', authenticate, upload.single('file'), uploadBooks);
 
 export default router;

@@ -1,9 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
-import csvParser from 'csv-parser';
+import parseCSV from '../utils/csvParser.js';
 
 const prisma = new PrismaClient();
-const upload = multer({ dest: 'uploads/' });
 
 export const getBooks = async (req, res) => {
   try {
@@ -78,5 +77,27 @@ export const deleteBook = async (req, res) => {
     res.json({ message: 'Book deleted' });
   } catch (error) {
     res.status(400).json({ error: 'Failed to delete book' });
+  }
+};
+
+export const uploadBooks = async (req, res) => {
+  try {
+    const filePath = req.file.path; 
+    const records = await parseCSV(filePath);
+
+    await prisma.book.createMany({
+      data: records.map((record) => ({
+        title: record.title,
+        author: record.author,
+        publishedAt: record.publishedAt,
+        price: record.price,
+        sellerId: req.user.id,
+      })),
+    });
+
+    res.status(201).json({ message: 'Books uploaded successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Failed to upload books' });
   }
 };
