@@ -9,7 +9,12 @@ export const register = async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, role }
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role,
+      },
     });
     res.status(201).json(user);
   } catch (error) {
@@ -24,7 +29,10 @@ export const login = async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET
+    );
     res.json({ token });
   } catch (error) {
     res.status(400).json({ error: 'Login failed' });
