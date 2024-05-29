@@ -9,6 +9,7 @@ export const getBooks = async (req, res) => {
     const books = await prisma.book.findMany();
     res.json(books);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: 'Error fetching books' });
   }
 };
@@ -29,75 +30,101 @@ export const getBookDetails = async (req, res) => {
 };
 
 export const createBook = async (req, res) => {
-  const { title, author, publishedAt, price, sellerId } = req.body;
-  try {
-    const book = await prisma.book.create({
-      data: {
-        title,
-        author,
-        publishedAt,
-        price,
-        sellerId: req.user.id,
-      },
-    });
-    res.status(201).json(book);
-  } catch (error) {
-    res.status(400).json({ error: 'failed to create book' });
+  if (req.user.role == 'SELLER') {
+    const { title, author, publishedAt, price, sellerId } = req.body;
+    try {
+      const book = await prisma.book.create({
+        data: {
+          title,
+          author,
+          publishedAt,
+          price,
+          sellerId: req.user.id,
+        },
+      });
+      res.status(201).json(book);
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({ error: 'failed to create book' });
+    }
+  } else {
+    res
+      .status(403)
+      .json({ error: 'This operation is allowed for sellers only' });
   }
 };
 
 export const updateBook = async (req, res) => {
-  const { id } = req.params;
-  const { title, author, price } = req.body;
-  try {
-    const book = await prisma.book.updateMany({
-      where: { id: parseInt(id), sellerId: req.user.id },
-      data: {
-        title,
-        author,
-        price,
-      },
-    });
-    if (book.count === 0)
-      return res.status(403).json({ error: 'Unauthorized' });
-    res.json({ message: 'Book updated' });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to update book' });
+  if (req.user.role == 'SELLER') {
+    const { id } = req.params;
+    const { title, author, price } = req.body;
+    try {
+      const book = await prisma.book.updateMany({
+        where: { id: parseInt(id), sellerId: req.user.id },
+        data: {
+          title,
+          author,
+          price,
+        },
+      });
+      if (book.count === 0)
+        return res.status(403).json({ error: 'Unauthorized' });
+      res.json({ message: 'Book updated' });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to update book' });
+    }
+  } else {
+    res
+      .status(403)
+      .json({ error: 'This operation is allowed for sellers only' });
   }
 };
 
 export const deleteBook = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const book = await prisma.book.deleteMany({
-      where: { id: parseInt(id), sellerId: req.user.id },
-    });
-    if (book.count === 0)
-      return res.status(403).json({ error: 'Unauthorized' });
-    res.json({ message: 'Book deleted' });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to delete book' });
+  if (req.user.role == 'SELLER') {
+    const { id } = req.params;
+    try {
+      const book = await prisma.book.deleteMany({
+        where: { id: parseInt(id), sellerId: req.user.id },
+      });
+      if (book.count === 0)
+        return res.status(403).json({ error: 'Unauthorized' });
+      res.json({ message: 'Book deleted' });
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({ error: 'Failed to delete book' });
+    }
+  } else {
+    res
+      .status(403)
+      .json({ error: 'This operation is allowed for sellers only' });
   }
 };
 
 export const uploadBooks = async (req, res) => {
-  try {
-    const filePath = req.file.path; 
-    const records = await parseCSV(filePath);
+  if (req.user.role == 'SELLER') {
+    try {
+      const filePath = req.file.path;
+      const records = await parseCSV(filePath);
 
-    await prisma.book.createMany({
-      data: records.map((record) => ({
-        title: record.title,
-        author: record.author,
-        publishedAt: record.publishedAt,
-        price: record.price,
-        sellerId: req.user.id,
-      })),
-    });
+      await prisma.book.createMany({
+        data: records.map((record) => ({
+          title: record.title,
+          author: record.author,
+          publishedAt: new Date(record.publishedDate),
+          price: parseFloat(record.price),
+          sellerId: req.user.id,
+        })),
+      });
 
-    res.status(201).json({ message: 'Books uploaded successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Failed to upload books' });
+      res.status(201).json({ message: 'Books uploaded successfully' });
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({ error: 'Failed to upload books'});
+    }
+  } else {
+    res
+      .status(403)
+      .json({ error: 'This operation is allowed for sellers only' });
   }
 };

@@ -13,6 +13,7 @@ export const authenticate = async (req, res, next) => {
     req.user = await prisma.user.findUnique({ where: { id: decoded_token.userId } });
     next();
   } catch (error) {
+    console.log(error);
     res.status(401).json({ error: 'Invalid token' });
   }
 };
