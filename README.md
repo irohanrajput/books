@@ -45,7 +45,7 @@ Manage Database Migrations
 
 ```bash
   npx prisma migrate dev --name init
-
+ 
 ```
 Setup PostgreSQL Database
 ```

@@ -4,7 +4,7 @@ import authRoutes from './routes/auth.route.js';
 import bookRoutes from './routes/book.route.js';
 
 dotenv.config();
-  
+
 const app = express();
 const PORT = 3000 || 5000;
 app.use(express.json());
