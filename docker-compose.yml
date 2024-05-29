@@ -11,3 +11,13 @@ services:
     ports:
       - "5432:5432"
 
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" 
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://booksUser:booksPassword@postgres:5432/booksDB
